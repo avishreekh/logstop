@@ -42,7 +42,7 @@ def exp(x):
         return 0.0
     return math.exp(x)
         
-def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: int, w: int = 1) -> float:
+def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: int, w: int = 1, memo={}) -> float:
     """
     Compute LogSTOP for the given trace and formula phi over the interval [start_idx, end_idx].
     Args:
@@ -51,6 +51,7 @@ def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: 
         start_idx (int): The starting index of the interval.
         end_idx (int): The ending index of the interval.
         w (int): The downsampling smoothing window (default is 1, meaning no smoothing).
+        memo (dict): A memoization dictionary to cache results (default is None).
     Returns:
         float: The LogSTOP value for the formula over the specified interval.
 
@@ -59,6 +60,9 @@ def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: 
         phi = LTLFormula("eventually", LTLFormula("class", "p"))    # Eventually p
         result = logstop(trace, phi, 0, 3)                      # Evaluate from index 0 to 3    
     """
+    if memo is not None and (phi, start_idx) in memo:
+        return memo[(phi, start_idx)]
+    
     if start_idx > end_idx:
         return log(0.0)
     if phi.op == "True":
@@ -69,24 +73,24 @@ def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: 
         # Local formula evaluation (averaged over start_idx to start_idx + w - 1)
         window_length = min(w, end_idx - start_idx + 1)
         prob = sum(trace[phi.left][start_idx:start_idx + window_length]) / window_length
-        return log(prob)
+        result = log(prob)
     elif phi.op == "not":
-        return log(1.0 - exp(logstop(trace, phi.left, start_idx, end_idx, w)))
+        result = log(1.0 - exp(logstop(trace, phi.left, start_idx, end_idx, w, memo)))
     elif phi.op == "and":
-        left_result = logstop(trace, phi.left, start_idx, end_idx, w)
-        right_result = logstop(trace, phi.right, start_idx, end_idx, w)
-        return left_result + right_result
+        left_result = logstop(trace, phi.left, start_idx, end_idx, w, memo)
+        right_result = logstop(trace, phi.right, start_idx, end_idx, w, memo)
+        result = left_result + right_result
     elif phi.op == "or":
         # De Morgan's law: A or B = not (not A and not B)
         phi_or = LTLFormula("not", 
                             LTLFormula("and", 
                                        LTLFormula("not", phi.left), 
                                        LTLFormula("not", phi.right)))
-        return logstop(trace, phi_or, start_idx, end_idx, w)
+        result = logstop(trace, phi_or, start_idx, end_idx, w, memo)
     elif phi.op == "next":
         if start_idx + w > end_idx:
             return log(0.0) # next is out of bounds
-        return logstop(trace, phi.left, start_idx + w, end_idx, w)
+        result = logstop(trace, phi.left, start_idx + w, end_idx, w, memo)
     elif phi.op == "until":
         # phi1 until phi2 = phi2 or (phi1 and not phi2 and next (phi1 until phi2))
         # The or branches are mutually exclusive
@@ -96,21 +100,28 @@ def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: 
                                             LTLFormula("not", phi.right),
                                             LTLFormula("next", phi))
                             )
-        result_phi2 = logstop(trace, phi.right, start_idx, end_idx, w)
-        result_phi_next = logstop(trace, phi_next, start_idx, end_idx, w)
+        result_phi2 = logstop(trace, phi.right, start_idx, end_idx, w, memo)
+        result_phi_next = logstop(trace, phi_next, start_idx, end_idx, w, memo)
         prob = exp(result_phi2) + exp(result_phi_next)     # mutual exclusivity
-        return log(prob)
+        result = log(prob)
     elif phi.op == "always":
         # always phi = phi and next always phi
         # could also use: always phi = not (eventually (not phi))
         if start_idx + w > end_idx: # last block (next is out of bounds)
-            return logstop(trace, phi.left, start_idx, end_idx, w)  
-        phi_always = LTLFormula("and", phi.left, LTLFormula("next", phi))
-        return logstop(trace, phi_always, start_idx, end_idx, w)
+            result = logstop(trace, phi.left, start_idx, end_idx, w, memo)  
+        else:
+            phi_always = LTLFormula("and", phi.left, LTLFormula("next", phi))
+            result = logstop(trace, phi_always, start_idx, end_idx, w, memo)
     elif phi.op == "eventually":
         # eventually phi = True until phi
         # could also use: eventually phi = not (always (not phi))
         phi_eventually = LTLFormula("until", LTLFormula("True"), phi.left)
-        return logstop(trace, phi_eventually, start_idx, end_idx, w)
+        result = logstop(trace, phi_eventually, start_idx, end_idx, w, memo)
     else:
         raise ValueError(f"Unknown operator: {phi.op}")
+    
+    if memo is not None:
+        memo[(phi, start_idx)] = result
+    return result
+
+    

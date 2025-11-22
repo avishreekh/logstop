@@ -6,6 +6,9 @@ python -m unittest tests.test_logstop.TestLogSTOPBasicOps
 
 Test logical equivalences:
 python -m unittest tests.test_logstop.TestLogSTOPEquivalences
+
+Test memoization functionality:
+python -m unittest tests.test_logstop.TestLogSTOPWithMemoization
 """
 
 from unittest.mock import patch
@@ -131,3 +134,45 @@ class TestLogSTOPEquivalences(unittest.TestCase):
         result_and = logstop(trace, phi_and, 0, 1, w=1)
         result_not_or_not = logstop(trace, phi_not_or_not, 0, 1, w=1)
         self.assertAlmostEqual(result_and, result_not_or_not)
+
+class TestLogSTOPWithMemoization(unittest.TestCase):
+    def test_memoization_effectiveness(self):
+        trace = {"p": [0.2, 0.5, 0.8], "q": [0.1, 0.4, 0.9]}
+        phi = LTLFormula("until", LTLFormula("class", "p"), LTLFormula("class", "q"))
+        memo = {}
+        result1 = logstop(trace, phi, 0, 2, w=1, memo=memo)
+        memo_size_after_first = len(memo)
+        result2 = logstop(trace, phi, 0, 2, w=1, memo=memo)
+        memo_size_after_second = len(memo)
+        self.assertEqual(result1, result2)
+        self.assertEqual(memo_size_after_first, memo_size_after_second)  # No new entries added on second call
+
+    def test_memoization_keys(self):
+        trace = {"p": [0.3, 0.6], "q": [0.2, 0.5]}
+        phi = LTLFormula("and", LTLFormula("class", "p"), LTLFormula("class", "q"))
+        memo = {}
+        logstop(trace, phi, 0, 1, w=1, memo=memo)
+        expected_keys = [
+            (LTLFormula("class", "p"), 0),
+            (LTLFormula("class", "q"), 0),
+            (phi, 0)
+        ]
+        # check string representations of keys for equality
+        memo_keys_str = [ (k[0].__str__(), k[1]) for k in memo.keys() ]
+        expected_keys_str = [ (k[0].__str__(), k[1]) for k in expected_keys ]
+        for key in expected_keys_str:
+            self.assertIn(key, memo_keys_str)
+
+    def test_memoization_values(self):
+        trace = {"p": [0.4, 0.7], "q": [0.3, 0.6]}
+        phi = LTLFormula("or", LTLFormula("class", "p"), LTLFormula("class", "q"))
+        memo = {}
+        logstop(trace, phi, 0, 1, w=2, memo=memo)
+        prob_p = (0.4 + 0.7) / 2
+        prob_q = (0.3 + 0.6) / 2
+        expected_prob = prob_p + prob_q - (prob_p * prob_q)
+        expected_log = math.log(expected_prob)
+        # check that the memo contains correct value for the main formula
+        key = (phi, 0)
+        self.assertIn((key[0].__str__(), key[1]), [(k[0].__str__(), k[1]) for k in memo.keys()])
+        self.assertAlmostEqual(memo[key], expected_log)
