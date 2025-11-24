@@ -11,7 +11,7 @@ class YOLO(LocalPropertyPredictor):
 
     def predict(self, frames: List[np.ndarray], local_properties: List[str], batch_size: int = 8) -> List[Dict[str, float]]:
         """
-        Detect objects in a batch of frames using YOLOv8.
+        Detect objects in a batch of frames using YOLO.
         Args:
             frames (List[np.ndarray]): List of frames as numpy arrays.
             local_properties (List[str]): List of local properties (objects) to detect.
@@ -23,7 +23,7 @@ class YOLO(LocalPropertyPredictor):
         results = []
         for i in range(0, len(frames), batch_size):
             frames_batch = frames[i:i+batch_size]
-            # YOLOv8 can process batches directly
+            # YOLO models can process batches directly
             detections = self.model.predict(frames_batch, conf=0, imgsz=(frames_batch[0].shape[0], frames_batch[0].shape[1]))
             for detection in detections:
                 detected_objects_with_scores = {}
