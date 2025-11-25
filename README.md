@@ -9,6 +9,7 @@ The repository is structured as follows (only the key components are mentioned h
 - `README.md` — project overview and usage
 - `requirements.txt` — Python dependencies
 - `run_query_matching_on_video.py` - Check if a video matches (expresses) a temporal property
+- `run_retrieval_on_video.py` - Retrieve the top-k videos corresponding to a temporal property
 - `src/`
   - `logstop.py` — LTL definitions and implementation of LogSTOP
   - `predictors/` — local property predictor implementations (object detectors, etc.)
@@ -18,6 +19,14 @@ The repository is structured as follows (only the key components are mentioned h
 - `tests/`
   - `test_logstop.py` — unit tests for `logstop` functionality
   - `test_local_property_predictors.py` — tests for predictor implementations
+
+## Requirements
+
+This codebase has been tested using python3.10 and dependencies from `requirements.txt`, installed using:
+
+```
+pip install -r requirements.txt
+```
 
 ## Query matching with LogSTOP
 
@@ -37,6 +46,21 @@ Replace "Always (person)" with any other temporal property over objects that can
 Please note that LogSTOP can be used to score temporal properties (queries) over *any* local property set, as long as we have associated local property predictors. Object classes as local properties are only used as an example here.
 To evaluate queries over other local properties (actions, concepts, etc.), just define a custom local property predictor (instructions below)!
 
+## Retrieval with LogSTOP
+
+To retrieve the top-k videos from `videos_database` corresponding to a temporal property, run:
+
+```
+python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
+                                   --fps 5 \
+                                   --query "Always (person)" \
+                                   --top_k 5 \
+                                   --local_property_predictor yolov8x \
+                                   --downsampling_smoothing_window 5 \
+                                   --batch_size 8 
+```
+
+As with query matching, replace "Always (person)" with temporal property of choice and YOLO with a custom local property predictor using the instructions below.
 
 ## Adding a new local property predictor
 
