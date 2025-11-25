@@ -42,3 +42,17 @@ class LocalPropertyPredictor:
                 score = result.get(p, 0.0)  # Default score is 0.0 if not detected
                 trace[p].append(score)
         return trace
+    
+def get_local_property_predictor(model_path: str) -> LocalPropertyPredictor:
+    """
+    Factory function to get a local property predictor based on the model path.
+    Args:
+        model_path (str): Path to the model or identifier for the predictor.
+    Returns:
+        LocalPropertyPredictor: An instance of a LocalPropertyPredictor subclass.
+    """
+    if "yolo" in model_path.lower():
+        from .object_detectors import YOLO
+        return YOLO(model_path=model_path)
+    else:
+        raise ValueError(f"Unsupported local property predictor model: {model_path}")
