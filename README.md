@@ -62,6 +62,7 @@ python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
                                    --max_frames 30 
 ```
 
+The parameters `min_frames` and `max_frames` can be omitted to check for relevance with respect to the entire video. 
 As with query matching, replace "Always (person)" with temporal property of choice and YOLO with a custom local property predictor using the instructions below.
 
 ## Adding a new local property predictor
