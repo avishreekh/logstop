@@ -48,7 +48,7 @@ To evaluate queries over other local properties (actions, concepts, etc.), just 
 
 ## Retrieval with LogSTOP
 
-To retrieve the top-k videos from `videos_database` corresponding to a temporal property, run:
+To retrieve the top-k videos from `videos_database` where segments with `[min_frames, max_frames]` frames are relevant to a temporal property, run:
 
 ```
 python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
@@ -57,7 +57,9 @@ python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
                                    --top_k 5 \
                                    --local_property_predictor yolov8x \
                                    --downsampling_smoothing_window 5 \
-                                   --batch_size 8 
+                                   --batch_size 8 \
+                                   --min_frames 10 \
+                                   --max_frames 30 
 ```
 
 As with query matching, replace "Always (person)" with temporal property of choice and YOLO with a custom local property predictor using the instructions below.
