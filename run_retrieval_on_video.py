@@ -10,7 +10,8 @@ python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
                                    --downsampling_smoothing_window 5 \
                                    --batch_size 8 \
                                    --min_frames 10 \
-                                   --max_frames 30 
+                                   --max_frames 30 \
+                                   --device "cuda"
 """
 
 import os
@@ -31,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("--downsampling_smoothing_window", "-w", type=int, default=1,  help="Downsampling smoothing window (w) for LogSTOP (Default = 1).")
     parser.add_argument("--min_frames", type=int, default=None, help="Minimum number of consecutive frames to consider when computing retrieval score.")
     parser.add_argument("--max_frames", type=int, default=None, help="Maximum number of consecutive frames to consider when computing retrieval score.")
+    parser.add_argument("--device", type=str, default="cpu", help="Device to run the local property predictor on (e.g., 'cpu' or 'cuda').")
     args = parser.parse_args()
 
     # Step 1: Parse the query
@@ -48,7 +50,7 @@ if __name__ == "__main__":
 
     for video_path in video_files:
         video_frames = extract_frames_from_video(video_path, fps=args.fps)[:50]  # Limit to first 50 frames for efficiency
-        trace = local_predictor.generate_trace(video_frames, batch_size=args.batch_size, local_properties=local_properties)
+        trace = local_predictor.generate_trace(video_frames, batch_size=args.batch_size, local_properties=local_properties, device=args.device)
 
         # Step 4: Compute LogSTOP score for the video as the maximum over all valid segments of length between min_frames and max_frames
         min_frames = args.min_frames if args.min_frames is not None else 1

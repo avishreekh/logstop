@@ -1,5 +1,5 @@
 """
-Script to run LogSTOP for query matching on a video using a local property predictor and an LTL formula.
+Script to run LogSTOP for query matching on a video using a local property predictor and a temporal query.
 
 Usage:
 python3.10 run_query_matching_on_video.py --video_path path/to/video.mp4 \
@@ -7,7 +7,8 @@ python3.10 run_query_matching_on_video.py --video_path path/to/video.mp4 \
                                    --query "Always (person)" \
                                    --local_property_predictor yolov8x \
                                    --downsampling_smoothing_window 5 \
-                                   --batch_size 8 
+                                   --batch_size 8 \
+                                   --device "cuda"
 """
 
 from argparse import ArgumentParser
