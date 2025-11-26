@@ -1,5 +1,5 @@
 import math
-from typing import Dict
+from typing import Dict, Tuple
 
 
 class LTLFormula:
@@ -42,7 +42,7 @@ def exp(x):
         return 0.0
     return math.exp(x)
         
-def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: int, w: int = 1, memo={}) -> float:
+def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: int, w: int=1, memo: Dict[Tuple[str, int], float]= None) -> float:
     """
     Compute LogSTOP for the given trace and formula phi over the interval [start_idx, end_idx].
     Args:
@@ -51,7 +51,7 @@ def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: 
         start_idx (int): The starting index of the interval.
         end_idx (int): The ending index of the interval.
         w (int): The downsampling smoothing window (default is 1, meaning no smoothing).
-        memo (dict): A memoization dictionary to cache results (default is None).
+        memo (Dict[(str, int), float]): A memoization dictionary to cache logstops for (phi, start_idx) pairs (default is None).
     Returns:
         float: The LogSTOP value for the formula over the specified interval.
 

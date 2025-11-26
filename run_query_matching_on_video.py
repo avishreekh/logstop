@@ -24,6 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_property_predictor", type=str, default="yolov8x", help="Local property predictor model.")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size for local property prediction.")
     parser.add_argument("--downsampling_smoothing_window", "-w", type=int, default=1,  help="Downsampling smoothing window (w) for LogSTOP (Default = 1).")
+    parser.add_argument("--device", type=str, default="cpu", help="Device to run the local property predictor on (e.g., 'cpu' or 'cuda').")
     args = parser.parse_args()
 
     # Step 1: Extract frames from the video
@@ -40,18 +41,18 @@ if __name__ == "__main__":
     # Step 3: Load the local property predictor and generate the trace
     print(f"Generating trace using the local property predictor: {args.local_property_predictor}")
     local_predictor = get_local_property_predictor(args.local_property_predictor)
-    trace = local_predictor.generate_trace(video_frames, batch_size=args.batch_size, local_properties=local_properties)
+    trace = local_predictor.generate_trace(video_frames, batch_size=args.batch_size, local_properties=local_properties, device=args.device)
     
     # Step 4: Run LogSTOP on the generated trace and LTL formula
-    score = logstop(trace, phi, start_idx=0, end_idx=len(video_frames)-1, w=args.downsampling_smoothing_window)
+    score = logstop(trace, phi, start_idx=0, end_idx=len(video_frames)-1, w=args.downsampling_smoothing_window, memo={})
     print(f"LogSTOP score for the video with query '{args.query}': {score}")
 
     # Step 5: Compute the adaptive threshold using a random trace
     random_trace = {
         prop: [0.5 for _ in range(len(trace[prop]))] for prop in trace.keys()
     }
-    random_score = logstop(random_trace, phi, start_idx=0, end_idx=len(video_frames)-1, w=args.downsampling_smoothing_window)
+    random_score = logstop(random_trace, phi, start_idx=0, end_idx=len(video_frames)-1, w=args.downsampling_smoothing_window, memo={})
     threshold = min(random_score, log(0.5))
-    print(f"Adaptive threshold (min between random trace score and log(0.5)): {threshold}")
+    print(f"Adaptive threshold (min between random trace score and ln(0.5)): {threshold}")
 
     print(f"Query match: {score > threshold}")
