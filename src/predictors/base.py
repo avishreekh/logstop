@@ -10,11 +10,11 @@ class LocalPropertyPredictor:
     def __init__(self, model_path: str):
         self.model_path = model_path
     
-    def predict(self, frames: List[np.ndarray], local_properties: List[str], batch_size: int = 8, device: str = "cpu") -> List[Dict[str, float]]:
+    def predict(self, video_path: str, local_properties: List[str], batch_size: int = 8, device: str = "cpu") -> List[Dict[str, float]]:
         """
         Predict local properties for a batch of frames.
         Args:
-            frames (List[np.ndarray]): List of frames as numpy arrays.
+            video_path (str): Path to the video file.
             local_properties (List[str]): List of local properties to predict.
             batch_size (int): Batch size for processing frames.
             device (str): Device to run the model on (e.g., 'cpu' or 'cuda').
@@ -25,11 +25,11 @@ class LocalPropertyPredictor:
         """
         raise NotImplementedError
     
-    def generate_trace(self, sequence_of_frames: List[np.ndarray], local_properties: List[str], batch_size: int = 8, device: str = "cpu") -> Dict[str, list]:
+    def generate_trace(self, video_path: str, local_properties: List[str], batch_size: int = 8, device: str = "cpu") -> Dict[str, list]:
         """
         Generate a trace for the given sequence of frames and propositions.
         Args:
-            sequence_of_frames (List[np.ndarray]): List of frames as numpy arrays.
+            video_path (str): Path to the video file.
             local_properties (List[str]): List of local properties to detect.
             batch_size (int): Batch size for processing frames.
             device (str): Device to run the model on (e.g., 'cpu' or 'cuda').
@@ -38,7 +38,7 @@ class LocalPropertyPredictor:
                             An example trace for a sequence of 2 frames could be: {'local_property1': [0.95, 0.0], 'local_property2': [0.80, 0.0]}
         """
         trace = {p: [] for p in local_properties}
-        batch_results = self.predict(sequence_of_frames, local_properties, batch_size=batch_size, device=device)
+        batch_results = self.predict(video_path, local_properties, batch_size=batch_size, device=device)
         for result in batch_results:
             for p in local_properties:
                 score = result.get(p, 0.0)  # Default score is 0.0 if not detected

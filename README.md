@@ -34,11 +34,11 @@ To evaluate whether a video `video.mp4` matches a temporal property over objects
 
 ```
 python3.10 run_query_matching_on_video.py --video_path path/to/video.mp4 \
-                                  --fps 5 \
                                   --query "Always (person)" \
                                   --local_property_predictor yolov8x \
                                   --downsampling_smoothing_window 5 \
-                                  --batch_size 8 
+                                  --batch_size 8 \
+                                  --device "cuda"
 ```
 
 Replace "Always (person)" with any other temporal property over objects that can be detected using YOLO.
