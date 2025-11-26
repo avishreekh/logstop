@@ -3,7 +3,6 @@ Script to run LogSTOP for retrieving the top-k videos with segments of length be
 
 Usage:
 python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
-                                   --fps 5 \
                                    --query "Always (person)" \
                                    --top_k 5 \
                                    --local_property_predictor yolov8x \
@@ -18,13 +17,11 @@ import os
 from argparse import ArgumentParser
 from src.logstop import logstop
 from src.predictors.base import get_local_property_predictor
-from src.utils.video import extract_frames_from_video
 from src.utils.ltl import parse_formula_from_string, extract_local_properties
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Run LogSTOP on a video with a local property predictor and an LTL formula.")
     parser.add_argument("--videos_dir", type=str, required=True, help="Path to the directory containing video files.")
-    parser.add_argument("--fps", type=int, default=5, help="Frames per second to extract from the video (Default = 5).")
     parser.add_argument("--query", type=str, required=True, help="Query (LTL formula) to evaluate.")
     parser.add_argument("--top_k", type=int, default=5, help="Number of top videos to retrieve (Default = 5).")
     parser.add_argument("--local_property_predictor", type=str, default="yolov8x", help="Local property predictor model.")
@@ -49,17 +46,17 @@ if __name__ == "__main__":
     video_scores = []
 
     for video_path in video_files:
-        video_frames = extract_frames_from_video(video_path, fps=args.fps)
-        trace = local_predictor.generate_trace(video_frames, batch_size=args.batch_size, local_properties=local_properties, device=args.device)
+        trace = local_predictor.generate_trace(video_path, batch_size=args.batch_size, local_properties=local_properties, device=args.device)
 
         # Step 4: Compute LogSTOP score for the video as the maximum over all valid segments of length between min_frames and max_frames
+        length_of_trace = len(trace[list(trace.keys())[0]])
         min_frames = args.min_frames if args.min_frames is not None else 1
-        max_frames = args.max_frames if args.max_frames is not None else len(video_frames)
+        max_frames = args.max_frames if args.max_frames is not None else length_of_trace
         
         score = float('-inf')
 
-        for start_idx in range(0, len(video_frames) - min_frames + 1):  # Ensure at least min_frames
-            end_idx = min(len(video_frames), start_idx + max_frames)  # Ensure at most max_frames
+        for start_idx in range(0, length_of_trace - min_frames + 1):  # Ensure at least min_frames
+            end_idx = min(length_of_trace, start_idx + max_frames)  # Ensure at most max_frames
             memo = {}
             # LogSTOP for the segment [start_idx, end_idx-1] would compute LogSTOPs for all suffix subsegments within this range
             current_score = logstop(trace, phi, start_idx=start_idx, end_idx=end_idx-1, w=args.downsampling_smoothing_window, memo=memo)

@@ -13,7 +13,6 @@ python3.10 run_query_matching_on_video.py --video_path path/to/video.mp4 \
 from argparse import ArgumentParser
 from src.logstop import logstop, log
 from src.predictors.base import get_local_property_predictor
-from src.utils.video import extract_frames_from_video
 from src.utils.ltl import parse_formula_from_string, extract_local_properties
 
 if __name__ == "__main__":

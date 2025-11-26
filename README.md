@@ -52,14 +52,14 @@ To retrieve the top-k videos from `videos_database` where segments with `[min_fr
 
 ```
 python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
-                                   --fps 5 \
                                    --query "Always (person)" \
                                    --top_k 5 \
                                    --local_property_predictor yolov8x \
                                    --downsampling_smoothing_window 5 \
                                    --batch_size 8 \
                                    --min_frames 10 \
-                                   --max_frames 30 
+                                   --max_frames 30 \
+                                   --device "cuda"
 ```
 
 The parameters `min_frames` and `max_frames` can be omitted to check for relevance with respect to the entire video. 
