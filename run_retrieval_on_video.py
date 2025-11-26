@@ -49,7 +49,7 @@ if __name__ == "__main__":
     video_scores = []
 
     for video_path in video_files:
-        video_frames = extract_frames_from_video(video_path, fps=args.fps)[:50]  # Limit to first 50 frames for efficiency
+        video_frames = extract_frames_from_video(video_path, fps=args.fps)
         trace = local_predictor.generate_trace(video_frames, batch_size=args.batch_size, local_properties=local_properties, device=args.device)
 
         # Step 4: Compute LogSTOP score for the video as the maximum over all valid segments of length between min_frames and max_frames
