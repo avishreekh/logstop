@@ -2,7 +2,7 @@
 
 This repository contains code for the paper ["LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval"](https://arxiv.org/abs/2510.06512).
 
-LogSTOP is an efficient algorithm for lifting scores for local properties (objects such as "car" per frame, for example) to temporal properties over sequences ("does a car eventually appear in the video?"). 
+LogSTOP is an efficient algorithm for lifting scores for local properties (objects such as "car" per frame, for example) to temporal properties over sequences ("does a car eventually appear in the video?"). Please see the paper for more examples of temporal properties over sequences from the video and speech modalities!
 
 We provide scripts to evaluate query matching and text to video retrieval using videos and temporal properties of your choice. While we only include YOLOv8x as an example of a local property predictor (local properties = objects here), we discuss how you could easily include your own custom local property predictors below! 
 
