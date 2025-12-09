@@ -34,6 +34,8 @@ This codebase has been tested using python3.10 and dependencies from `requiremen
 pip install -r requirements.txt
 ```
 
+You could download a short example video database (2 videos from the NuScenes dataset) from [this google drive link](https://drive.google.com/drive/folders/1qTr003HVhp2B46D8U7SDwtkbN-969gBU?usp=share_link) to test the scripts that follow before trying them on custom videos!
+
 ## Query matching with LogSTOP
 
 To evaluate whether a video `video.mp4` matches a temporal property over objects using LogSTOP over predictions from `YOLOv8`, run:
