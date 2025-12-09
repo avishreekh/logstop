@@ -13,7 +13,7 @@ LogSTOP is an efficient algorithm for lifting scores for local properties (objec
 <figure>
   <img src="assets/LogSTOP_query_matching_example.png" alt="An example of LogSTOP for query matching">
   <figcaption>
-    <i>LogSTOPs for three videos with respect to the query <b>"Is there a person in all frames of this video?"</b>. Video 2 with occluded persons is assigned a lower score than video 1 (where a person is visible in all frames), and higher score than video 3 (where there are frames with no persons). The adaptive threshold can be used for query matching and the order of scores can be used for ranked retrieval. YOLOv8x is used here to detect objects in individual frames of the videos.</i>
+    <b>Figure 1: <b><i>LogSTOPs for three videos with respect to the query <b>"Is there a person in all frames of this video?"</b>. Video 2 with occluded persons is assigned a lower score than video 1 (where a person is visible in all frames), and higher score than video 3 (where there are frames with no persons). The adaptive threshold can be used for query matching and the order of scores can be used for ranked retrieval. YOLOv8x is used here to detect objects in individual frames of the videos.</i>
   </figcaption>
 </figure>
 
