@@ -2,6 +2,10 @@
 
 This repository contains code for the paper "LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval".
 
+We provide scripts to evaluate query matching and text to video retrieval using videos and temporal properties of your choice. While we only include YOLOv8x as an example of a local property predictor (local properties = objects here), we discuss how you could easily include your own custom local property predictors below! 
+
+Please feel free to reach out to <akhare@seas.upenn.edu> to discuss applications to other domains (maybe you are interested in temporal properties over multimodal data) and local properties (actions, speakers, higher level concepts such as occlusion or lighting maybe?).
+
 ## Project structure
 
 The repository is structured as follows (only the key components are mentioned here):
@@ -73,7 +77,7 @@ To add a new local property predictor, inherit the `LocalPropertyPredictor` clas
 from `src/predictors/base.py` and implement the `predict` method.
 Then, update the `get_local_property_predictor` method in `src/predictors/base.py` to route to this predictor using a string identifier.
 
-Please see the `YOLO` class in `src/predictors/object_detectors.py` for an example!
+Please see the `YOLO` class in `src/predictors/object_detectors.py` for an example! 
 
 ## Cite us!
 
