@@ -74,3 +74,16 @@ from `src/predictors/base.py` and implement the `predict` method.
 Then, update the `get_local_property_predictor` method in `src/predictors/base.py` to route to this predictor using a string identifier.
 
 Please see the `YOLO` class in `src/predictors/object_detectors.py` for an example!
+
+## Cite us!
+
+If you find LogSTOP and/or the QMTP and TP2VR benchmark creation pipelines useful, please consider citing us:
+
+```
+@article{khare2025logstop,
+  title={LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval},
+  author={Khare, Avishree and Okamoto, Hideki and Hoxha, Bardh and Fainekos, Georgios and Alur, Rajeev},
+  journal={arXiv preprint arXiv:2510.06512},
+  year={2025}
+}
+```
