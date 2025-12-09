@@ -2,7 +2,7 @@
 
 This repository contains code for the paper ["LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval"](https://arxiv.org/abs/2510.06512).
 
-LogSTOP is an efficient algorithm for lifting scores for local properties (objects such as "car" per frame, for example) to temporal properties over sequences ("does a car eventually appear in the video?"). Please see the paper for more examples of temporal properties over sequences from the video and speech modalities!
+LogSTOP is an efficient algorithm for lifting scores for local properties (objects such as "car" per frame, for example) to temporal properties over sequences ("does a car eventually appear in the video?"). Additionally, LogSTOP offers robustness to local noise such as occasional misdetections due to occlusions, etc. Please see the paper for more examples of temporal properties over sequences from the video and speech modalities!
 
 We provide scripts to evaluate query matching and text to video retrieval using videos and temporal properties of your choice. While we only include YOLOv8x as an example of a local property predictor (local properties = objects here), we discuss how you could easily include your own custom local property predictors below! 
 
@@ -37,6 +37,13 @@ pip install -r requirements.txt
 You could download a short example video database (2 videos from the NuScenes dataset) from [this google drive link](https://drive.google.com/drive/folders/1qTr003HVhp2B46D8U7SDwtkbN-969gBU?usp=share_link) to test the scripts that follow before trying them on custom videos!
 
 ## Query matching with LogSTOP
+
+<figure>
+  <img src="assets/LogSTOP_query_matching_example.png" alt="An example of LogSTOP for query matching">
+  <figcaption>
+    LogSTOPs for three videos with respect to the query *"Is there a person in all frames of this video?"*. Video 2 with occluded persons is assigned a lower score than video 1 (where a person is visible in all frames), and higher score than video 3 (where there are frames with no persons). The adaptive threshold can be used for query matching. YOLOv8x is used here to detect objects in individual frames of the videos.
+  </figcaption>
+</figure>
 
 To evaluate whether a video `video.mp4` matches a temporal property over objects using LogSTOP over predictions from `YOLOv8`, run:
 
