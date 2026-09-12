@@ -1,14 +1,25 @@
-# LogSTOP: Scores for temporal properties over sequences
+# LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval
 
-This repository contains code for the paper ["LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval"](https://arxiv.org/abs/2510.06512).
+This repository contains code for ["LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval"](https://arxiv.org/abs/2510.06512). This version was presented at the [NeurIPS 2025 NextVid Workshop: *What Makes a Good Video: Next Practices in Video Generation and Evaluation*](https://neurips.cc/virtual/2025/loc/san-diego/131788).
 
 We provide scripts to evaluate query matching and text to video retrieval using videos and temporal properties of your choice. While we only include YOLOv8x as an example of a local property predictor (local properties = objects here), we discuss how you could easily include your own custom local property predictors below! 
 
-Please feel free to reach out to <akhare@seas.upenn.edu> to discuss applications to other domains (maybe you are interested in temporal properties over multimodal data) and local properties (actions, speakers, higher level concepts such as occlusion or lighting maybe?).
+Please feel free to reach out to <akhare@seas.upenn.edu> to discuss applications to other domains (temporal properties over multimodal data, for example) and local properties (actions, speakers, higher level concepts).
+
+## Table of contents
+
+- [What is LogSTOP?](#what-is-logstop)
+- [Project structure](#project-structure)
+- [Requirements](#requirements)
+- [Query matching with LogSTOP](#query-matching-with-logstop)
+- [Retrieval with LogSTOP](#retrieval-with-logstop)
+- [Coming soon](#coming-soon)
+- [Adding a new local property predictor](#adding-a-new-local-property-predictor)
+- [Cite us!](#cite-us)
 
 ## What is LogSTOP?
 
-LogSTOP is an efficient algorithm for lifting scores for local properties (objects such as "car" per frame, for example) to temporal properties over sequences ("does a car eventually appear in the video?"). Additionally, LogSTOP offers robustness to local noise such as occasional misdetections due to occlusions, etc. Please see the paper for more examples of temporal properties over sequences from the video and speech modalities!
+LogSTOP is an efficient algorithm for lifting scores for local properties (objects such as "car" per frame, for example) to temporal properties over sequences ("does a car eventually appear in the video?"). Additionally, LogSTOP offers robustness to local noise such as occasional misdetections due to occlusions, etc. Please see the paper for more examples of temporal properties over sequences from the video and speech modalities.
 
 <figure>
   <img src="assets/LogSTOP_query_matching_example.png" alt="An example of LogSTOP for query matching">
@@ -52,17 +63,17 @@ To evaluate whether a video `video.mp4` matches a temporal property over objects
 
 ```
 python3.10 run_query_matching_on_video.py --video_path path/to/video.mp4 \
-                                  --query "Always (person)" \
+                                  --query "Always (car)" \
                                   --local_property_predictor yolov8x \
                                   --downsampling_smoothing_window 5 \
                                   --batch_size 8 \
                                   --device "cuda"
 ```
 
-Replace "Always (person)" with any other temporal property over objects that can be detected using YOLO.
+Replace "Always (car)" with any other temporal property over objects that can be detected using YOLO.
 
 Please note that LogSTOP can be used to score temporal properties (queries) over *any* local property set, as long as we have associated local property predictors. Object classes as local properties are only used as an example here.
-To evaluate queries over other local properties (actions, concepts, etc.), just define a custom local property predictor (instructions below)!
+To evaluate queries over other local properties (actions, concepts, etc.), just define a custom local property predictor (instructions below).
 
 ## Retrieval with LogSTOP
 
@@ -70,7 +81,7 @@ To retrieve the top-k videos from `videos_database` where segments with `[min_fr
 
 ```
 python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
-                                   --query "Always (person)" \
+                                   --query "Always (car)" \
                                    --top_k 5 \
                                    --local_property_predictor yolov8x \
                                    --downsampling_smoothing_window 5 \
@@ -81,7 +92,12 @@ python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
 ```
 
 The parameters `min_frames` and `max_frames` can be omitted to check for relevance with respect to the entire video. 
-As with query matching, replace "Always (person)" with temporal property of choice and YOLO with a custom local property predictor using the instructions below.
+As with query matching, replace "Always (car)" with temporal property of choice and YOLO with a custom local property predictor using the instructions below.
+
+## Coming soon
+
+- [ ] The QMTP benchmark for temporal query matching over objects and actions in videos.
+- [ ] The TP2VR benchmark for temporal-property-to-video retrieval over objects and actions in videos.
 
 ## Adding a new local property predictor
 
@@ -98,10 +114,11 @@ Please see the `YOLO` class in `src/predictors/object_detectors.py` for an examp
 If you find LogSTOP and/or the QMTP and TP2VR benchmark creation pipelines useful, please consider citing us:
 
 ```
-@article{khare2025logstop,
-  title={LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval},
+@inproceedings{khare2025logstop,
+  title={Confidence Scores for Temporal Properties over Sequences of Predictions},
   author={Khare, Avishree and Okamoto, Hideki and Hoxha, Bardh and Fainekos, Georgios and Alur, Rajeev},
-  journal={arXiv preprint arXiv:2510.06512},
-  year={2025}
+  booktitle={NeurIPS 2025 Workshop on What Makes a Good Video: Next Practices in Video Generation and Evaluation (NextVid)},
+  year={2025},
+  url={https://openreview.net/forum?id=ebUulmQXPP}
 }
 ```
