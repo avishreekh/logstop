@@ -6,6 +6,17 @@ We provide scripts to evaluate query matching and text to video retrieval using 
 
 Please feel free to reach out to <akhare@seas.upenn.edu> to discuss applications to other domains (temporal properties over multimodal data, for example) and other local properties (actions, speakers, other higher level concepts).
 
+## Table of contents
+
+- [What is LogSTOP?](#what-is-logstop)
+- [Project structure](#project-structure)
+- [Requirements](#requirements)
+- [Query matching with LogSTOP](#query-matching-with-logstop)
+- [Retrieval with LogSTOP](#retrieval-with-logstop)
+- [Coming soon](#coming-soon)
+- [Adding a new local property predictor](#adding-a-new-local-property-predictor)
+- [Cite us!](#cite-us)
+
 ## What is LogSTOP?
 
 LogSTOP is an efficient algorithm for lifting scores for local properties (objects such as "car" per frame, for example) to temporal properties over sequences ("does a car eventually appear in the video?"). Additionally, LogSTOP offers robustness to local noise such as occasional misdetections due to occlusions, etc. Please see the paper for more examples of temporal properties over sequences from the video and speech modalities.
