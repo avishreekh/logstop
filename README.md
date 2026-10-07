@@ -1,6 +1,6 @@
 # LogSTOP: Scores for temporal properties over sequences
 
-This repository contains code for an updated version of the paper ["LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval"](https://arxiv.org/abs/2510.06512).
+This repository contains code for the paper ["LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval"](https://arxiv.org/abs/2510.06512) (NeurIPS 2026).
 
 We provide scripts to evaluate query matching and text to video retrieval using videos and temporal properties of your choice. While we only include YOLOv8x as an example of a local property predictor (local properties = objects here), we discuss how you could include your own custom local property predictors below.
 
