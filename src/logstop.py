@@ -1,5 +1,5 @@
 import math
-from typing import Dict, Tuple
+from typing import Dict, Mapping, Optional, Tuple
 
 
 class LTLFormula:
@@ -14,7 +14,7 @@ class LTLFormula:
         elif self.op == "False":
             return "False"
         elif self.op == "class":
-            return str(self.left)   # local formula
+            return str(self.left)
         elif self.op == "not":
             return f"not {self.left}"
         elif self.op == "and":
@@ -29,99 +29,114 @@ class LTLFormula:
             return f"always {self.left}"
         elif self.op == "eventually":
             return f"eventually {self.left}"
-        else:
-            raise ValueError(f"Unknown operator: {self.op}")
-        
+        raise ValueError(f"Unknown operator: {self.op}")
+
+
 def log(x):
     if x <= 0.0:
         return float("-inf")
     return math.log(x)
 
+
 def exp(x):
     if x == float("-inf"):
         return 0.0
     return math.exp(x)
-        
-def logstop(trace : Dict[str, list], phi : LTLFormula, start_idx: int, end_idx: int, w: int=1, memo: Dict[Tuple[str, int], float]= None) -> float:
-    """
-    Compute LogSTOP for the given trace and formula phi over the interval [start_idx, end_idx].
-    Args:
-        trace (Dict[str, list]): The input trace as a dictionary mapping variable names to [0,1] predictions over time.
-        phi (LTLFormula): The LTL formula to evaluate.
-        start_idx (int): The starting index of the interval.
-        end_idx (int): The ending index of the interval.
-        w (int): The downsampling smoothing window (default is 1, meaning no smoothing).
-        memo (Dict[(str, int), float]): A memoization dictionary to cache logstops for (phi, start_idx) pairs (default is None).
-    Returns:
-        float: The LogSTOP value for the formula over the specified interval.
 
-    Example usage:
-        trace = {"p": [0.1, 0.5, 0.9, 0.7], "q": [0.2, 0.8, 0.4, 0.6]}
-        phi = LTLFormula("eventually", LTLFormula("class", "p"))    # Eventually p
-        result = logstop(trace, phi, 0, 3)                      # Evaluate from index 0 to 3    
+
+def _local_properties(phi: LTLFormula) -> set:
+    if phi.op == "class":
+        return {phi.left}
+    if phi.op in {"not", "next", "always", "eventually"}:
+        return _local_properties(phi.left)
+    if phi.op in {"and", "or", "until"}:
+        return _local_properties(phi.left) | _local_properties(phi.right)
+    return set()
+
+
+def _log_not(score: float) -> float:
+    if score >= 0.0:
+        return float("-inf")
+    if score == float("-inf"):
+        return 0.0
+    return math.log1p(-math.exp(score))
+
+
+def _log_or(left: float, right: float) -> float:
+    probability = exp(left) + exp(right) - exp(left + right)
+    return log(min(1.0, max(0.0, probability)))
+
+
+def logstop(
+    processed_trace: Mapping[str, list],
+    phi: LTLFormula,
+    start_idx: int,
+    end_idx: int,
+    memo: Optional[Dict[Tuple[LTLFormula, int], float]] = None,
+) -> float:
+    """Score a preprocessed trace over inclusive interval ``[start_idx, end_idx]``.
+
+    A memo may be shared by calls with different starts only when the processed
+    trace, formula, and end index are unchanged.
     """
-    if memo is not None and (phi, start_idx) in memo:
-        return memo[(phi, start_idx)]
-    
+    if start_idx < 0:
+        raise ValueError("start_idx must be non-negative")
     if start_idx > end_idx:
-        return log(0.0)
-    if phi.op == "True":
-        return log(1.0)
-    elif phi.op == "False":
-        return log(0.0)
-    elif phi.op == "class":
-        # Local formula evaluation (averaged over start_idx to start_idx + w - 1)
-        window_length = min(w, end_idx - start_idx + 1)
-        prob = sum(trace[phi.left][start_idx:start_idx + window_length]) / window_length
-        result = log(prob)
-    elif phi.op == "not":
-        result = log(1.0 - exp(logstop(trace, phi.left, start_idx, end_idx, w, memo)))
-    elif phi.op == "and":
-        left_result = logstop(trace, phi.left, start_idx, end_idx, w, memo)
-        right_result = logstop(trace, phi.right, start_idx, end_idx, w, memo)
-        result = left_result + right_result
-    elif phi.op == "or":
-        # De Morgan's law: A or B = not (not A and not B)
-        phi_or = LTLFormula("not", 
-                            LTLFormula("and", 
-                                       LTLFormula("not", phi.left), 
-                                       LTLFormula("not", phi.right)))
-        result = logstop(trace, phi_or, start_idx, end_idx, w, memo)
-    elif phi.op == "next":
-        if start_idx + w > end_idx:
-            return log(0.0) # next is out of bounds
-        result = logstop(trace, phi.left, start_idx + w, end_idx, w, memo)
-    elif phi.op == "until":
-        # phi1 until phi2 = phi2 or (phi1 and not phi2 and next (phi1 until phi2))
-        # The or branches are mutually exclusive
-        phi_next = LTLFormula("and",
-                                phi.left,
-                                LTLFormula("and",
-                                            LTLFormula("not", phi.right),
-                                            LTLFormula("next", phi))
-                            )
-        result_phi2 = logstop(trace, phi.right, start_idx, end_idx, w, memo)
-        result_phi_next = logstop(trace, phi_next, start_idx, end_idx, w, memo)
-        prob = exp(result_phi2) + exp(result_phi_next)     # mutual exclusivity
-        result = log(prob)
-    elif phi.op == "always":
-        # always phi = phi and next always phi
-        # could also use: always phi = not (eventually (not phi))
-        if start_idx + w > end_idx: # last block (next is out of bounds)
-            result = logstop(trace, phi.left, start_idx, end_idx, w, memo)  
-        else:
-            phi_always = LTLFormula("and", phi.left, LTLFormula("next", phi))
-            result = logstop(trace, phi_always, start_idx, end_idx, w, memo)
-    elif phi.op == "eventually":
-        # eventually phi = True until phi
-        # could also use: eventually phi = not (always (not phi))
-        phi_eventually = LTLFormula("until", LTLFormula("True"), phi.left)
-        result = logstop(trace, phi_eventually, start_idx, end_idx, w, memo)
-    else:
-        raise ValueError(f"Unknown operator: {phi.op}")
-    
-    if memo is not None:
-        memo[(phi, start_idx)] = result
-    return result
+        return float("-inf")
 
-    
+    for prop in _local_properties(phi):
+        if prop not in processed_trace:
+            raise KeyError(f"trace has no predictions for local property {prop!r}")
+        if end_idx >= len(processed_trace[prop]):
+            raise IndexError(
+                f"end_idx {end_idx} is outside the prediction trace for {prop!r}"
+            )
+    cache = memo if memo is not None else {}
+
+    def score(formula: LTLFormula, timestep: int) -> float:
+        key = (formula, timestep)
+        if key in cache:
+            return cache[key]
+
+        if timestep > end_idx:
+            result = float("-inf")
+        elif formula.op == "True":
+            result = 0.0
+        elif formula.op == "False":
+            result = float("-inf")
+        elif formula.op == "class":
+            result = log(processed_trace[formula.left][timestep])
+        elif formula.op == "not":
+            result = _log_not(score(formula.left, timestep))
+        elif formula.op == "and":
+            result = score(formula.left, timestep) + score(formula.right, timestep)
+        elif formula.op == "or":
+            result = _log_or(
+                score(formula.left, timestep), score(formula.right, timestep)
+            )
+        elif formula.op == "next":
+            result = score(formula.left, timestep + 1)
+        elif formula.op == "until":
+            right = score(formula.right, timestep)
+            if timestep == end_idx:
+                result = right
+            else:
+                continuation = score(formula.left, timestep) + score(
+                    formula, timestep + 1
+                )
+                result = _log_or(right, continuation)
+        elif formula.op == "always":
+            result = score(formula.left, timestep)
+            if timestep < end_idx:
+                result += score(formula, timestep + 1)
+        elif formula.op == "eventually":
+            result = score(formula.left, timestep)
+            if timestep < end_idx:
+                result = _log_or(result, score(formula, timestep + 1))
+        else:
+            raise ValueError(f"Unknown operator: {formula.op}")
+
+        cache[key] = result
+        return result
+
+    return score(phi, start_idx)

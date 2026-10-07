@@ -1,10 +1,8 @@
 # LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval
 
-This repository contains code for ["LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval"](https://arxiv.org/abs/2510.06512). This version was presented at the [NeurIPS 2025 NextVid Workshop: *What Makes a Good Video: Next Practices in Video Generation and Evaluation*](https://neurips.cc/virtual/2025/loc/san-diego/131788).
+This repository contains code for the paper ["LogSTOP: Temporal Scores over Prediction Sequences for Matching and Retrieval"](https://arxiv.org/abs/2510.06512) (NeurIPS 2026).
 
-We provide scripts to evaluate query matching and text to video retrieval using videos and temporal properties of your choice. While we only include YOLOv8x as an example of a local property predictor (local properties = objects here), we discuss how you could easily include your own custom local property predictors below! 
-
-Please feel free to reach out to <akhare@seas.upenn.edu> to discuss applications to other domains (temporal properties over multimodal data, for example) and local properties (actions, speakers, higher level concepts).
+We provide scripts to evaluate query matching and text to video retrieval using videos and temporal properties of your choice. While we only include YOLOv8x as an example of a local property predictor (local properties = objects here), we discuss how you could include your own custom local property predictors below.
 
 ## Table of contents
 
@@ -65,12 +63,29 @@ To evaluate whether a video `video.mp4` matches a temporal property over objects
 python3.10 run_query_matching_on_video.py --video_path path/to/video.mp4 \
                                   --query "Always (car)" \
                                   --local_property_predictor yolov8x \
-                                  --downsampling_smoothing_window 5 \
+                                  --smoothing_radius 1 \
+                                  --local_threshold 0.5 \
                                   --batch_size 8 \
                                   --device "cuda"
 ```
 
-Replace "Always (car)" with any other temporal property over objects that can be detected using YOLO.
+Replace "Always (person)" with any other temporal property over objects that can be detected using YOLO.
+
+`--local_threshold` sets the constant local property prediction value used to construct the
+threshold trace for adaptive query matching; it defaults to `0.5`.
+
+`--smoothing_radius` applies a centered window to every local property; `0` disables
+smoothing. In Python, call `preprocess_trace` before `logstop`. Its
+`smoothing_radii` may instead be a dictionary such as
+`{"car": 1, "pedestrian": 2}`; omitted properties use radius `0`.
+
+```python
+from src.preprocess import preprocess_trace
+from src.logstop import logstop
+
+processed_trace = preprocess_trace(trace, smoothing_radii={"car": 1})
+score = logstop(processed_trace, formula, start_idx=0, end_idx=len(trace["car"]) - 1)
+```
 
 Please note that LogSTOP can be used to score temporal properties (queries) over *any* local property set, as long as we have associated local property predictors. Object classes as local properties are only used as an example here.
 To evaluate queries over other local properties (actions, concepts, etc.), just define a custom local property predictor (instructions below).
@@ -84,7 +99,7 @@ python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
                                    --query "Always (car)" \
                                    --top_k 5 \
                                    --local_property_predictor yolov8x \
-                                   --downsampling_smoothing_window 5 \
+                                   --smoothing_radius 1 \
                                    --batch_size 8 \
                                    --min_frames 10 \
                                    --max_frames 30 \
@@ -94,9 +109,17 @@ python3.10 run_retrieval_on_video.py --videos_dir path/to/video_database/ \
 The parameters `min_frames` and `max_frames` can be omitted to check for relevance with respect to the entire video. 
 As with query matching, replace "Always (car)" with temporal property of choice and YOLO with a custom local property predictor using the instructions below.
 
+Each candidate trace is preprocessed once. For every possible segment end, the
+retrieval runner shares a dynamic programming memo across segment starts and keeps
+only the best `top_k` candidates in a bounded min-heap.
+
 ## Coming soon
 
-- [ ] The QMTP benchmark for temporal query matching over objects and actions in videos.
+The following features and resources are planned:
+
+- [ ] Calibration of local property predictions using a held-out set.
+- [ ] Automatic smoothing radii selection using a held-out set.
+- [ ] The QMTP benchmark for temporal query matching over objects in videos.
 - [ ] The TP2VR benchmark for temporal-property-to-video retrieval over objects and actions in videos.
 
 ## Adding a new local property predictor
@@ -107,7 +130,9 @@ To add a new local property predictor, inherit the `LocalPropertyPredictor` clas
 from `src/predictors/base.py` and implement the `predict` method.
 Then, update the `get_local_property_predictor` method in `src/predictors/base.py` to route to this predictor using a string identifier.
 
-Please see the `YOLO` class in `src/predictors/object_detectors.py` for an example! 
+Please see the `YOLO` class in `src/predictors/object_detectors.py` for an example.
+
+Please feel free to reach out to <akhare@engineering.upenn.edu> to discuss applications to other domains (temporal properties over multimodal data, for example) and other local properties (actions, speakers, other higher level concepts).
 
 ## Cite us!
 
