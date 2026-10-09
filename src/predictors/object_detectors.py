@@ -1,13 +1,14 @@
 from typing import List, Dict
 import numpy as np
 from .base import LocalPropertyPredictor
-    
+
 class YOLO(LocalPropertyPredictor):
     def __init__(self, model_path: str = "yolov8x.pt"):
         super().__init__(model_path)
         from ultralytics import YOLO
         self.model = YOLO(self.model_path)
         self.classes = self.model.names
+        self.image_size = 640
 
     def predict(self, video_path: str, local_properties: List[str], batch_size: int = 1, device: str = "cpu") -> List[Dict[str, float]]:
         """
@@ -22,8 +23,22 @@ class YOLO(LocalPropertyPredictor):
                                     An example of the list for 2 frames could be: [{'person': 0.95, 'car': 0.80}, {'bicycle': 0.90}]
         """
         class_ids_to_detect = [cid for cid, cname in self.classes.items() if cname in local_properties]
-        detections = self.model.predict(source=video_path, conf=0, imgsz=(640, 640), device=device, batch=batch_size, classes=class_ids_to_detect)
-        
+        unsupported = set(local_properties) - set(self.classes.values())
+        if unsupported:
+            raise ValueError(f"Unsupported YOLO properties: {sorted(unsupported)}")
+        image_size = self.image_size
+        if image_size == "frame":
+            import cv2
+            capture = cv2.VideoCapture(video_path)
+            try:
+                success, frame = capture.read()
+                if not success:
+                    raise ValueError(f"Cannot read first frame: {video_path}")
+                image_size = frame.shape[:2]
+            finally:
+                capture.release()
+        detections = self.model.predict(source=video_path, conf=0, imgsz=image_size, device=device, batch=batch_size, classes=class_ids_to_detect, stream=True, verbose=False)
+
         results = []
         for detection in detections:
             detected_objects_with_scores = {}
@@ -38,6 +53,3 @@ class YOLO(LocalPropertyPredictor):
                         detected_objects_with_scores[c] = max(detected_objects_with_scores[c], conf_scores[idx].item())
             results.append(detected_objects_with_scores)
         return results
-
-    
-        

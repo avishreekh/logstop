@@ -1,0 +1,6 @@
+# Setup dependencies only; inference dependencies remain in ../requirements.txt.
+numpy==2.2.6
+opencv-python-headless==4.12.0.88
+pillow==12.0.0
+huggingface_hub>=0.27,<1
+tqdm>=4.66,<5

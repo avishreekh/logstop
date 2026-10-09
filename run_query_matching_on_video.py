@@ -12,8 +12,7 @@ python3.10 run_query_matching_on_video.py --video_path path/to/video.mp4 \
 """
 
 from argparse import ArgumentParser
-from src.logstop import logstop
-from src.preprocess import preprocess_trace
+from src.evaluation import match_query
 from src.predictors.base import get_local_property_predictor
 from src.utils.ltl import parse_formula_from_string, extract_local_properties
 
@@ -49,26 +48,12 @@ if __name__ == "__main__":
     print(f"Generating trace using the local property predictor: {args.local_property_predictor}")
     local_predictor = get_local_property_predictor(args.local_property_predictor)
     trace = local_predictor.generate_trace(args.video_path, batch_size=args.batch_size, local_properties=local_properties, device=args.device)
-    length_of_trace = len(trace[list(trace.keys())[0]])
 
-    # Step 3: Run LogSTOP on the generated trace and LTL formula after preprocessing
-    processed_trace = preprocess_trace(trace, args.smoothing_radius)
-    score = logstop(processed_trace, phi, start_idx=0, end_idx=length_of_trace-1)
-    print(f"LogSTOP score for the video with query '{args.query}': {score}")
-
-    # Step 4: Compute the adaptive threshold using a constant threshold trace
-    threshold_trace = {
-        prop: [args.local_threshold] * len(values) for prop, values in trace.items()
-    }
-    processed_threshold_trace = preprocess_trace(
-        threshold_trace, args.smoothing_radius
-    )
-    threshold = logstop(
-        processed_threshold_trace, phi, start_idx=0, end_idx=length_of_trace - 1
-    )
+    # Step 3: Score and compare against the adaptive threshold.
+    result = match_query(trace, phi, args.local_threshold, args.smoothing_radius)
+    print(f"LogSTOP score for the video with query '{args.query}': {result['score']}")
     print(
         "Adaptive threshold "
-        f"(LogSTOP over the {args.local_threshold} threshold trace): {threshold}"
+        f"(LogSTOP over the {args.local_threshold} threshold trace): {result['threshold']}"
     )
-
-    print(f"Query match: {score > threshold}")
+    print(f"Query match: {result['matched']}")
